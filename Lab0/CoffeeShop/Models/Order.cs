@@ -1,6 +1,6 @@
 namespace CoffeeShop.Models
 {
-    public class Order : IPrototype<Order>
+    public class Order
     {
         static int counter = 1;
 
@@ -15,15 +15,6 @@ namespace CoffeeShop.Models
         {
             Id = counter++;
             CustomerName = customerName;
-        }
-
-        public Order Clone()
-        {
-            var copy = new Order(CustomerName);
-            foreach (var d in Drinks)
-                copy.Drinks.Add(d.Clone());
-
-            return copy;
         }
     }
 }

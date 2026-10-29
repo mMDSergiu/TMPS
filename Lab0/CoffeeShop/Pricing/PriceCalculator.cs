@@ -2,7 +2,7 @@ using CoffeeShop.Models;
 
 namespace CoffeeShop.Pricing;
 
-public class PriceCalculator : IPriceCalculator
+public class PriceCalculator
 {
     public decimal GetSubtotal(Order order)
     {

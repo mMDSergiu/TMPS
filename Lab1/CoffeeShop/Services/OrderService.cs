@@ -10,10 +10,10 @@ public class OrderService
 {
     private readonly IOrderRepository repo;
     private readonly INotifier notifier;
-    private readonly PriceCalculator calculator;
-    private readonly ReceiptPrinter printer;
+    private readonly IPriceCalculator calculator;
+    private readonly IReceiptPrinter printer;
 
-    public OrderService(IOrderRepository repo, INotifier notifier, PriceCalculator calculator, ReceiptPrinter printer)
+    public OrderService(IOrderRepository repo, INotifier notifier, IPriceCalculator calculator, IReceiptPrinter printer)
     {
         this.repo = repo;
         this.notifier = notifier;
