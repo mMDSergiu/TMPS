@@ -10,7 +10,7 @@ IOutput output = new ConsoleOutput();
 var repo = new OrderRepository();
 var service = new OrderService(repo, new ConsoleNotifier(), new PriceCalculator(), new ReceiptPrinter(output));
 
-var configuredMenu = Menu.Instance
+var configuredMenu = MenuSingleton.Instance
     .AddDrink("Espresso", 25)
     .AddDrink("Latte", 40)
     .AddDrink("Cappuccino", 38)
@@ -21,7 +21,7 @@ var configuredMenu = Menu.Instance
     .AddRule(new SyrupRule());
 
 IMenu menu = configuredMenu;
-var sameMenu = Menu.Instance;
+var sameMenu = MenuSingleton.Instance;
 Console.WriteLine("Same menu object? " + ReferenceEquals(menu, sameMenu));
 new MenuPrinter(output).Print(menu);
 Console.WriteLine();

@@ -4,39 +4,39 @@ using CoffeeShop.Pricing;
 
 namespace CoffeeShop.Services;
 
-public sealed class Menu : IMenu
+public sealed class MenuSingleton : IMenu
 {
-    private static Menu? instance;
+    private static MenuSingleton? instance;
     private static readonly object locker = new object();
 
     private readonly Dictionary<string, decimal> prices = new();
     private readonly List<IDrinkPriceRule> rules = new();
 
-    private Menu()
+    private MenuSingleton()
     {
         Console.WriteLine("(loading menu...)");
     }
 
-    public static Menu Instance
+    public static MenuSingleton Instance
     {
         get
         {
             lock (locker)
             {
                 if (instance == null)
-                    instance = new Menu();
+                    instance = new MenuSingleton();
                 return instance;
             }
         }
     }
 
-    public Menu AddDrink(string name, decimal basePrice)
+    public MenuSingleton AddDrink(string name, decimal basePrice)
     {
         lock (locker) prices[name] = basePrice;
         return this;
     }
 
-    public Menu AddRule(IDrinkPriceRule rule)
+    public MenuSingleton AddRule(IDrinkPriceRule rule)
     {
         lock (locker) rules.Add(rule);
         return this;
