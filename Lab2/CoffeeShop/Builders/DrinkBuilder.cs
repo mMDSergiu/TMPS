@@ -1,4 +1,5 @@
 using CoffeeShop.Models;
+using CoffeeShop.Pricing;
 
 namespace CoffeeShop.Builders;
 
@@ -12,10 +13,22 @@ public class DrinkBuilder
     private int shots;
     private List<string> syrups = new();
 
-    public DrinkBuilder(string name, decimal basePrice)
+    private readonly IEnumerable<IDrinkPriceRule> rules;
+
+    public DrinkBuilder(string name, decimal basePrice, IEnumerable<IDrinkPriceRule> rules)
     {
         this.name = name;
         this.basePrice = basePrice;
+        this.rules = rules;
+    }
+
+    public DrinkBuilder StartingFrom(Drink drink)
+    {
+        size = drink.Size;
+        milk = drink.Milk;
+        shots = drink.ExtraShots;
+        syrups = new List<string>(drink.Syrups);
+        return this;
     }
 
     public DrinkBuilder Size(DrinkSize size)
@@ -44,24 +57,16 @@ public class DrinkBuilder
 
     public Drink Build()
     {
-        decimal price = basePrice;
-
-        if (size == DrinkSize.Small) price -= 5;
-        else if (size == DrinkSize.Large) price += 10;
-
-        if (milk != null && milk != "regular")
-            price += 5;
-        price += shots * 8;
-        price += syrups.Count * 6;
-
-        return new Drink
+        var drink = new Drink
         {
             Name = name,
             Size = size,
             Milk = milk,
             ExtraShots = shots,
-            Syrups = new List<string>(syrups),
-            Price = price
+            Syrups = syrups.ToArray()
         };
+
+        drink.Price = basePrice + rules.Sum(r => r.ExtraFor(drink));
+        return drink;
     }
 }

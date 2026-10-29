@@ -1,24 +1,20 @@
 using CoffeeShop.Builders;
+using CoffeeShop.Models;
+using CoffeeShop.Pricing;
 
 namespace CoffeeShop.Services;
 
-public sealed class Menu
+public sealed class Menu : IMenu
 {
     private static Menu? instance;
     private static readonly object locker = new object();
 
-    private readonly Dictionary<string, decimal> prices;
+    private readonly Dictionary<string, decimal> prices = new();
+    private readonly List<IDrinkPriceRule> rules = new();
 
     private Menu()
     {
         Console.WriteLine("(loading menu...)");
-        prices = new Dictionary<string, decimal>
-        {
-            { "Espresso", 25 },
-            { "Latte", 40 },
-            { "Cappuccino", 38 },
-            { "Tea", 20 },
-        };
     }
 
     public static Menu Instance
@@ -34,19 +30,30 @@ public sealed class Menu
         }
     }
 
+    public Menu AddDrink(string name, decimal basePrice)
+    {
+        lock (locker) prices[name] = basePrice;
+        return this;
+    }
+
+    public Menu AddRule(IDrinkPriceRule rule)
+    {
+        lock (locker) rules.Add(rule);
+        return this;
+    }
+
+    public IReadOnlyDictionary<string, decimal> Prices => prices;
 
     public DrinkBuilder Make(string drinkName)
     {
         if (!prices.ContainsKey(drinkName))
             throw new ArgumentException("We dont have " + drinkName);
 
-        return new DrinkBuilder(drinkName, prices[drinkName]);
+        return new DrinkBuilder(drinkName, prices[drinkName], rules.ToArray());
     }
 
-    public void Print()
+    public DrinkBuilder Modify(Drink drink)
     {
-        Console.WriteLine("MENU");
-        foreach (var p in prices)
-            Console.WriteLine($"  {p.Key,-12}{p.Value,5} lei");
+        return Make(drink.Name).StartingFrom(drink);
     }
 }

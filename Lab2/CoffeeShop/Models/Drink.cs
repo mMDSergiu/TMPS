@@ -9,14 +9,14 @@ public class Drink : IPrototype<Drink>
     public string? Milk { get; internal set; }
 
     public int ExtraShots { get; internal set; }
-    public List<string> Syrups { get; internal set; } = new List<string>();
+    public IReadOnlyList<string> Syrups { get; internal set; } = Array.Empty<string>();
     public decimal Price { get; internal set; }
 
 
     public Drink Clone()
     {
         var copy = (Drink)MemberwiseClone();
-        copy.Syrups = new List<string>(Syrups);
+        copy.Syrups = Syrups.ToArray();
         return copy;
     }
 

@@ -28,7 +28,13 @@ New files:
 CoffeeShop/
   Builders/DrinkBuilder.cs
   Models/IPrototype.cs
+  Output/IOutput.cs
+  Pricing/DrinkPriceRules.cs
+  Pricing/IPriceCalculator.cs
+  Services/IMenu.cs
   Services/Menu.cs
+  Services/MenuPrinter.cs
+  Services/IReceiptPrinter.cs
 ```
 
 and `Drink.cs` / `Order.cs` were changed.
@@ -78,11 +84,11 @@ var latte = menu.Make("Latte")
     .Build();
 ```
 
-Every method returns `this` so the calls can be chained. The prices rules are inside `Build()`: small is 5 lei cheaper, large is +10, plant milk +5, extra shot +8, each syrup +6.
+Every method returns `this` so the calls can be chained. `Build()` creates the drink and then asks a list of price rules (see the OCP part below) how much each option adds: small is 5 lei cheaper, large is +10, plant milk +5, extra shot +8, each syrup +6.
 
 The setters in `Drink` are `internal` so outside code cant just change the price of a drink, it has to go through the builder.
 
-I connected the Builder with the Singleton, `Menu.Make("Latte")` returns a new DrinkBuilder that already has the base price from the menu. And if you ask for a drink that is not on the menu it throws an exception.
+I connected the Builder with the Singleton, `Menu.Make("Latte")` returns a new DrinkBuilder that already has the base price from the menu and the price rules. And if you ask for a drink that is not on the menu it throws an exception.
 
 ## Prototype
 
@@ -110,7 +116,36 @@ public Drink Clone()
 
 `Order.Clone()` creates a new order (so it gets a new Id) and clones every drink inside it.
 
-In Program.cs Ana repeats her order with `o1.Clone()`, then I add caramel to the first drink of the copy and print both. The original stays without caramel, so the copy is really independent. Victor also gets a clone of Ana's order, I just change the CustomerName.
+In Program.cs Ana repeats her order with `o1.Clone()`, then I add caramel to the first drink of the copy (through `menu.Modify`) and print both. The original stays without caramel, so the copy is really independent. Victor also gets a clone of Ana's order, I just change the CustomerName.
+
+## SOLID in this lab
+
+The new code has to follow the same rules as in lab 1, so after the first version I checked it and fixed these things:
+
+* **OCP**: at first the price rules were `if/else` inside `DrinkBuilder.Build()`, so a new option (for example a new size) meant editing the builder. Now every rule is a class that implements `IDrinkPriceRule` (`SizeRule`, `MilkRule`, `ExtraShotRule`, `SyrupRule`) and `Build()` just sums them up. A new option is a new class, the builder stays the same.
+
+```csharp
+public interface IDrinkPriceRule
+{
+    decimal ExtraFor(Drink drink);
+}
+
+drink.Price = basePrice + rules.Sum(r => r.ExtraFor(drink));
+```
+
+* **SRP**: `Menu` was the singleton, the price list, the builder factory and it also printed itself. Printing moved to `MenuPrinter`, so `Menu` only keeps prices and gives out builders.
+* **DIP**: `Program` used the concrete `Menu` class. Now there is an `IMenu` interface and `Program` / `MenuPrinter` depend on it. `Menu` is still a singleton (private constructor, `Menu.Instance`), but the code that uses the menu does not care how it is created.
+
+* **OCP (menu data)**: the drinks and price rules were hardcoded in the `Menu` constructor. Now `Menu` starts empty and `Program.cs` (the place where objects are created) fills it with `AddDrink(...)` and `AddRule(...)`, so a new drink or rule does not change `Menu`.
+* **DIP (service)**: `OrderService` took the concrete `PriceCalculator` and `ReceiptPrinter`. I added `IPriceCalculator` and `IReceiptPrinter`, now it depends only on interfaces.
+* **SRP / DIP (output)**: `CashPayment`, `CardPayment`, `ReceiptPrinter` and `MenuPrinter` wrote to `Console` directly. Now they get an `IOutput` in the constructor (`ConsoleOutput` in the app), so they only decide *what* to print, not *where*.
+* **Encapsulation of the price**: in the first version `Program` did `drink.Syrups.Add("caramel")`, which added the syrup but left the old price. Now `Drink.Syrups` is `IReadOnlyList<string>` and a drink is changed with `menu.Modify(drink).AddSyrup("caramel").Build()`, which goes through the rules and gives a new drink with the right price (67 lei instead of 61).
+
+```csharp
+o3.Drinks[0] = menu.Modify(o3.Drinks[0]).AddSyrup("caramel").Build();
+```
+
+Discounts, payment methods, notifiers, the repository are unchanged from lab 1, so SRP, OCP and DIP still hold there. The only place that still uses `Console` directly is the "(loading menu...)" line in the `Menu` constructor, because a singleton with a private constructor cannot receive dependencies, and I keep it on purpose to show that the constructor runs only once.
 
 ## Running
 
@@ -179,4 +214,4 @@ Total orders saved: 4
 
 In this lab I added three creational patterns to the coffee shop. Singleton made sure there is only one menu with one set of prices. Builder made creating drinks with many options readable and moved the price calculation in one place. Prototype made it easy to repeat orders, and I understood the diference between shallow and deep copy, because at first my clone shared the syrup list with the original and that was a bug.
 
-The patterns also work well with the SOLID stuff from lab 1, for example adding a new option to drinks only changes the builder and not OrderService or PriceCalculator.
+The patterns also work well with the SOLID stuff from lab 1, for example adding a new option to drinks means adding a price rule class and a builder method, and not touching OrderService or PriceCalculator.
