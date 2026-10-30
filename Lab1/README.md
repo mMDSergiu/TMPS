@@ -18,21 +18,21 @@ Everything from lab 0 (discounts, payments, notifiers, OrderService) is still th
 
 In lab 0 a drink was just a name and a price. That is not very realistic, in a real coffee shop you can pick the size, the milk, add syrup or an extra shot of espresso, and all of this changes the price. So now:
 
-* there is a `MenuSingleton` with the base prices of all drinks (Singleton)
-* drinks are made with a `DrinkBuilder` (Builder)
+* there is a `Menu` with the base prices of all drinks (Singleton)
+* drinks are made with a `DrinkMaker` (Builder)
 * orders and drinks can be cloned, so a client can repeat an order (Prototype)
 
 New files:
 
 ```
 CoffeeShop/
-  Builders/DrinkBuilder.cs
-  Models/IPrototype.cs
+  Makers/DrinkMaker.cs
+  Models/ICopyable.cs
   Output/IOutput.cs
   Pricing/DrinkPriceRules.cs
   Pricing/IPriceCalculator.cs
   Services/IMenu.cs
-  Services/MenuSingleton.cs
+  Services/Menu.cs
   Services/MenuPrinter.cs
   Services/IReceiptPrinter.cs
 ```
@@ -43,24 +43,24 @@ and `Drink.cs` / `Order.cs` were changed.
 
 A coffee shop has one menu. If every part of the program made its own Menu object, it could happen that two places have different prices, so it makes sense to have only one instance.
 
-The constructor is private so nobody can do `new MenuSingleton()`, and the only way to get it is through `MenuSingleton.Instance`. The object is created the first time someone asks for it (lazy). I also added a `lock` so if two threads call Instance at the same time it still creates only one object.
+The constructor is private so nobody can do `new Menu()`, and the only way to get it is through `Menu.Instance`. The object is created the first time someone asks for it (lazy). I also added a `lock` so if two threads call Instance at the same time it still creates only one object.
 
 ```csharp
-public sealed class MenuSingleton
+public sealed class Menu
 {
-    private static MenuSingleton? instance;
+    private static Menu? instance;
     private static readonly object locker = new object();
 
-    private MenuSingleton() { ... }
+    private Menu() { ... }
 
-    public static MenuSingleton Instance
+    public static Menu Instance
     {
         get
         {
             lock (locker)
             {
                 if (instance == null)
-                    instance = new MenuSingleton();
+                    instance = new Menu();
                 return instance;
             }
         }
@@ -68,7 +68,7 @@ public sealed class MenuSingleton
 }
 ```
 
-In Program.cs I call `MenuSingleton.Instance` two times and check with `ReferenceEquals`, it prints True, and the "(loading menu...)" message appears only once, so the constructor ran one time.
+In Program.cs I call `Menu.Instance` two times and check with `ReferenceEquals`, it prints True, and the "(loading menu...)" message appears only once, so the constructor ran one time.
 
 ## Builder
 
@@ -88,14 +88,14 @@ Every method returns `this` so the calls can be chained. `Build()` creates the d
 
 The setters in `Drink` are `internal` so outside code cant just change the price of a drink, it has to go through the builder.
 
-I connected the Builder with the Singleton, `menu.Make("Latte")` returns a new DrinkBuilder that already has the base price from the menu and the price rules. And if you ask for a drink that is not on the menu it throws an exception.
+I connected the Builder with the Singleton, `menu.Make("Latte")` returns a new DrinkMaker that already has the base price from the menu and the price rules. And if you ask for a drink that is not on the menu it throws an exception.
 
 ## Prototype
 
 Clients often order the same thing again, so instead of building every drink again there is a `Clone()` method. I made a small generic interface for it:
 
 ```csharp
-public interface IPrototype<T>
+public interface ICopyable<T>
 {
     T Clone();
 }
@@ -122,7 +122,7 @@ In Program.cs Ana repeats her order with `o1.Clone()`, then I add caramel to the
 
 The new code has to follow the same rules as in lab 0, so after the first version I checked it and fixed these things:
 
-* **OCP**: at first the price rules were `if/else` inside `DrinkBuilder.Build()`, so a new option (for example a new size) meant editing the builder. Now every rule is a class that implements `IDrinkPriceRule` (`SizeRule`, `MilkRule`, `ExtraShotRule`, `SyrupRule`) and `Build()` just sums them up. A new option is a new class, the builder stays the same.
+* **OCP**: at first the price rules were `if/else` inside `DrinkMaker.Build()`, so a new option (for example a new size) meant editing the builder. Now every rule is a class that implements `IDrinkPriceRule` (`SizeRule`, `MilkRule`, `ExtraShotRule`, `SyrupRule`) and `Build()` just sums them up. A new option is a new class, the builder stays the same.
 
 ```csharp
 public interface IDrinkPriceRule
@@ -133,10 +133,10 @@ public interface IDrinkPriceRule
 drink.Price = basePrice + rules.Sum(r => r.ExtraFor(drink));
 ```
 
-* **SRP**: `MenuSingleton` was the singleton, the price list, the builder factory and it also printed itself. Printing moved to `MenuPrinter`, so `MenuSingleton` only keeps prices and gives out builders.
-* **DIP**: `Program` used the concrete `MenuSingleton` class. Now there is an `IMenu` interface and `Program` / `MenuPrinter` depend on it. `MenuSingleton` is still a singleton (private constructor, `MenuSingleton.Instance`), but the code that uses the menu does not care how it is created.
+* **SRP**: `Menu` was the singleton, the price list, the builder factory and it also printed itself. Printing moved to `MenuPrinter`, so `Menu` only keeps prices and gives out builders.
+* **DIP**: `Program` used the concrete `Menu` class. Now there is an `IMenu` interface and `Program` / `MenuPrinter` depend on it. `Menu` is still a singleton (private constructor, `Menu.Instance`), but the code that uses the menu does not care how it is created.
 
-* **OCP (menu data)**: the drinks and price rules were hardcoded in the `MenuSingleton` constructor. Now `MenuSingleton` starts empty and `Program.cs` (the place where objects are created) fills it with `AddDrink(...)` and `AddRule(...)`, so a new drink or rule does not change `MenuSingleton`.
+* **OCP (menu data)**: the drinks and price rules were hardcoded in the `Menu` constructor. Now `Menu` starts empty and `Program.cs` (the place where objects are created) fills it with `AddDrink(...)` and `AddRule(...)`, so a new drink or rule does not change `Menu`.
 * **DIP (service)**: `OrderService` took the concrete `PriceCalculator` and `ReceiptPrinter`. I added `IPriceCalculator` and `IReceiptPrinter`, now it depends only on interfaces.
 * **SRP / DIP (output)**: `CashPayment`, `CardPayment`, `ReceiptPrinter` and `MenuPrinter` wrote to `Console` directly. Now they get an `IOutput` in the constructor (`ConsoleOutput` in the app), so they only decide *what* to print, not *where*.
 * **Encapsulation of the price**: in the first version `Program` did `drink.Syrups.Add("caramel")`, which added the syrup but left the old price. Now `Drink.Syrups` is `IReadOnlyList<string>` and a drink is changed with `menu.Modify(drink).AddSyrup("caramel").Build()`, which goes through the rules and gives a new drink with the right price (67 lei instead of 61).
@@ -145,7 +145,7 @@ drink.Price = basePrice + rules.Sum(r => r.ExtraFor(drink));
 o3.Drinks[0] = menu.Modify(o3.Drinks[0]).AddSyrup("caramel").Build();
 ```
 
-Discounts, payment methods, notifiers, the repository are unchanged from lab 0, so SRP, OCP and DIP still hold there. The only place that still uses `Console` directly is the "(loading menu...)" line in the `MenuSingleton` constructor, because a singleton with a private constructor cannot receive dependencies, and I keep it on purpose to show that the constructor runs only once.
+Discounts, payment methods, notifiers, the repository are unchanged from lab 0, so SRP, OCP and DIP still hold there. The only place that still uses `Console` directly is the "(loading menu...)" line in the `Menu` constructor, because a singleton with a private constructor cannot receive dependencies, and I keep it on purpose to show that the constructor runs only once.
 
 ## Running
 

@@ -1,9 +1,9 @@
 using CoffeeShop.Models;
 using CoffeeShop.Pricing;
 
-namespace CoffeeShop.Builders;
+namespace CoffeeShop.Makers;
 
-public class DrinkBuilder
+public class DrinkMaker
 {
     private readonly string name;
     private readonly decimal basePrice;
@@ -15,14 +15,14 @@ public class DrinkBuilder
 
     private readonly IEnumerable<IDrinkPriceRule> rules;
 
-    public DrinkBuilder(string name, decimal basePrice, IEnumerable<IDrinkPriceRule> rules)
+    public DrinkMaker(string name, decimal basePrice, IEnumerable<IDrinkPriceRule> rules)
     {
         this.name = name;
         this.basePrice = basePrice;
         this.rules = rules;
     }
 
-    public DrinkBuilder StartingFrom(Drink drink)
+    public DrinkMaker StartingFrom(Drink drink)
     {
         size = drink.Size;
         milk = drink.Milk;
@@ -31,24 +31,24 @@ public class DrinkBuilder
         return this;
     }
 
-    public DrinkBuilder Size(DrinkSize size)
+    public DrinkMaker Size(DrinkSize size)
     {
         this.size = size;
         return this;
     }
-    public DrinkBuilder WithMilk(string milk)
+    public DrinkMaker WithMilk(string milk)
     {
         this.milk = milk;
         return this;
     }
 
-    public DrinkBuilder ExtraShot()
+    public DrinkMaker ExtraShot()
     {
         shots++;
         return this;
     }
 
-    public DrinkBuilder AddSyrup(string syrup)
+    public DrinkMaker AddSyrup(string syrup)
     {
         syrups.Add(syrup);
 

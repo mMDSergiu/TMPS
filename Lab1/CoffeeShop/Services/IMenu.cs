@@ -1,4 +1,4 @@
-using CoffeeShop.Builders;
+using CoffeeShop.Makers;
 using CoffeeShop.Models;
 
 namespace CoffeeShop.Services;
@@ -6,6 +6,6 @@ namespace CoffeeShop.Services;
 public interface IMenu
 {
     IReadOnlyDictionary<string, decimal> Prices { get; }
-    DrinkBuilder Make(string drinkName);
-    DrinkBuilder Modify(Drink drink);
+    DrinkMaker Make(string drinkName);
+    DrinkMaker Modify(Drink drink);
 }

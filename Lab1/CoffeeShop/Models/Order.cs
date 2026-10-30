@@ -1,6 +1,6 @@
 namespace CoffeeShop.Models
 {
-    public class Order : IPrototype<Order>
+    public class Order : ICopyable<Order>
     {
         static int counter = 1;
 

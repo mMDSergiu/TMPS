@@ -2,7 +2,7 @@ namespace CoffeeShop.Models;
 
 public enum DrinkSize { Small, Medium, Large }
 
-public class Drink : IPrototype<Drink>
+public class Drink : ICopyable<Drink>
 {
     public string Name { get; internal set; } = "";
     public DrinkSize Size { get; internal set; } = DrinkSize.Medium;

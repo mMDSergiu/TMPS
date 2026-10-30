@@ -1,6 +1,6 @@
 namespace CoffeeShop.Models;
 
-public interface IPrototype<T>
+public interface ICopyable<T>
 {
     T Clone();
 }
