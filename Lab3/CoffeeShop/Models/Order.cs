@@ -1,3 +1,4 @@
+using CoffeeShop.Listeners;
 using CoffeeShop.Statuses;
 
 namespace CoffeeShop.Models
@@ -7,6 +8,7 @@ namespace CoffeeShop.Models
         static int counter = 1;
 
         private readonly List<IOrderItem> items = new();
+        private readonly List<IOrderListener> listeners = new();
 
 
         public int Id { get; private set; }
@@ -47,9 +49,20 @@ namespace CoffeeShop.Models
         public void HandOver() => Status.HandOver(this);
         public void Cancel() => Status.Cancel(this);
 
+        public void Subscribe(IOrderListener listener)
+        {
+            if (!listeners.Contains(listener))
+                listeners.Add(listener);
+        }
+
+        public void Unsubscribe(IOrderListener listener) => listeners.Remove(listener);
+
         internal void SetStatus(OrderStatus status)
         {
             Status = status;
+
+            foreach (var listener in listeners.ToList())
+                listener.StatusChanged(this);
         }
 
         public Order Clone()

@@ -15,7 +15,7 @@ public class CheckoutTests
         var real = new OrderRepository();
         var output = new TestOutput();
         var service = new OrderService(new ProtectedOrders(real, new Staff("Maria", false)),
-            new SilentNotifier(), new PriceCalculator(), new ReceiptPrinter(output));
+            new PriceCalculator(), new ReceiptPrinter(output));
 
         var order = new Order("Ana");
         order.AddItem(new ToGo(Make.Breakfast()));

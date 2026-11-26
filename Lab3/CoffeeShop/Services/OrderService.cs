@@ -1,5 +1,4 @@
 using CoffeeShop.Models;
-using CoffeeShop.Notifications;
 using CoffeeShop.Payments;
 using CoffeeShop.Pricing;
 using CoffeeShop.Repositories;
@@ -9,14 +8,12 @@ namespace CoffeeShop.Services;
 public class OrderService
 {
     private readonly IOrderRepository repo;
-    private readonly INotifier notifier;
     private readonly IPriceCalculator calculator;
     private readonly IReceiptPrinter printer;
 
-    public OrderService(IOrderRepository repo, INotifier notifier, IPriceCalculator calculator, IReceiptPrinter printer)
+    public OrderService(IOrderRepository repo, IPriceCalculator calculator, IReceiptPrinter printer)
     {
         this.repo = repo;
-        this.notifier = notifier;
         this.calculator = calculator;
         this.printer = printer;
     }
@@ -32,13 +29,11 @@ public class OrderService
         if (!paid)
         {
             order.Cancel();
-            notifier.Send(order.CustomerName, "payment failed, order canceled");
             return false;
         }
 
         order.Pay();
         repo.Add(order);
-        notifier.Send(order.CustomerName, "your order is being prepared :)");
         return true;
     }
 }

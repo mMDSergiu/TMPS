@@ -1,4 +1,5 @@
 using CoffeeShop.Extras;
+using CoffeeShop.Listeners;
 using CoffeeShop.Models;
 using CoffeeShop.Notifications;
 using CoffeeShop.Output;
@@ -36,29 +37,32 @@ var manager = new Staff("Dan", IsManager: true);
 
 var allOrders = new OrderRepository();
 var calculator = new PriceCalculator();
-var service = new OrderService(new ProtectedOrders(allOrders, cashier), new ConsoleNotifier(), calculator, new ReceiptPrinter(output));
+var service = new OrderService(new ProtectedOrders(allOrders, cashier), calculator, new ReceiptPrinter(output));
+
+var screen = new PickupScreen(output);
+var sms = new SmsAlert(new SmsNotifier());
 
 
 var o1 = new Order("Ana");
+o1.Subscribe(screen);
+o1.Subscribe(sms);
 o1.AddItem(new ToGo(menu.Combo("Breakfast")));
 o1.AddItem(menu.Make("Espresso").ExtraShot().Build());
 service.ProcessOrder(o1, new StudentDiscount(), new CardPayment("4111222233334444", output));
 Console.WriteLine();
 
-var family = new Combo("Family", discount: 12)
-    .Add(menu.Combo("Breakfast"))
-    .Add(menu.Combo("Breakfast"))
-    .Add(menu.Make("Tea").Size(DrinkSize.Large).Build());
-
 var o2 = new Order("Ion");
-o2.AddItem(family);
+o2.Subscribe(screen);
+o2.AddItem(new Combo("Family", discount: 12)
+    .Add(menu.Combo("Breakfast"))
+    .Add(menu.Combo("Breakfast"))
+    .Add(menu.Make("Tea").Size(DrinkSize.Large).Build()));
 service.ProcessOrder(o2, new HappyHourDiscount(), new CashPayment(120, output));
 Console.WriteLine();
 
-var o3 = new Order("Victor");
-o3.AddItem(new GiftBox(new ToGo(menu.Combo("Sweet"))));
-o3.AddItem(new Pastry("Cookie", 15));
-service.ProcessOrder(o3, new NoDiscount(), new CardPayment("5555666677778888", output));
+o1.StartPreparing();
+o1.MarkReady();
+o1.HandOver();
 Console.WriteLine();
 
 try
