@@ -31,10 +31,12 @@ public class OrderService
         bool paid = payment.Pay(total);
         if (!paid)
         {
+            order.Cancel();
             notifier.Send(order.CustomerName, "payment failed, order canceled");
             return false;
         }
 
+        order.Pay();
         repo.Add(order);
         notifier.Send(order.CustomerName, "your order is being prepared :)");
         return true;

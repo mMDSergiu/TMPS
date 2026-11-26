@@ -18,7 +18,7 @@ public class CheckoutTests
             new SilentNotifier(), new PriceCalculator(), new ReceiptPrinter(output));
 
         var order = new Order("Ana");
-        order.Items.Add(new ToGo(Make.Breakfast()));
+        order.AddItem(new ToGo(Make.Breakfast()));
 
         bool ok = service.ProcessOrder(order, new NoDiscount(), new CardPayment("4111222233334444", output));
 

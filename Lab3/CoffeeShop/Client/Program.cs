@@ -40,8 +40,8 @@ var service = new OrderService(new ProtectedOrders(allOrders, cashier), new Cons
 
 
 var o1 = new Order("Ana");
-o1.Items.Add(new ToGo(menu.Combo("Breakfast")));
-o1.Items.Add(menu.Make("Espresso").ExtraShot().Build());
+o1.AddItem(new ToGo(menu.Combo("Breakfast")));
+o1.AddItem(menu.Make("Espresso").ExtraShot().Build());
 service.ProcessOrder(o1, new StudentDiscount(), new CardPayment("4111222233334444", output));
 Console.WriteLine();
 
@@ -51,13 +51,13 @@ var family = new Combo("Family", discount: 12)
     .Add(menu.Make("Tea").Size(DrinkSize.Large).Build());
 
 var o2 = new Order("Ion");
-o2.Items.Add(family);
+o2.AddItem(family);
 service.ProcessOrder(o2, new HappyHourDiscount(), new CashPayment(120, output));
 Console.WriteLine();
 
 var o3 = new Order("Victor");
-o3.Items.Add(new GiftBox(new ToGo(menu.Combo("Sweet"))));
-o3.Items.Add(new Pastry("Cookie", 15));
+o3.AddItem(new GiftBox(new ToGo(menu.Combo("Sweet"))));
+o3.AddItem(new Pastry("Cookie", 15));
 service.ProcessOrder(o3, new NoDiscount(), new CardPayment("5555666677778888", output));
 Console.WriteLine();
 
