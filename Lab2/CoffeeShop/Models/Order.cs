@@ -9,7 +9,7 @@ namespace CoffeeShop.Models
 
 
         public string CustomerName { get; set; }
-        public List<Drink> Drinks { get; } = new List<Drink>();
+        public List<IOrderItem> Items { get; } = new List<IOrderItem>();
 
         public Order(string customerName)
         {
@@ -20,8 +20,8 @@ namespace CoffeeShop.Models
         public Order Clone()
         {
             var copy = new Order(CustomerName);
-            foreach (var d in Drinks)
-                copy.Drinks.Add(d.Clone());
+            foreach (var item in Items)
+                copy.Items.Add(item.Clone());
 
             return copy;
         }

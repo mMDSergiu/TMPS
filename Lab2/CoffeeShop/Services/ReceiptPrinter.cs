@@ -16,14 +16,24 @@ public class ReceiptPrinter : IReceiptPrinter
     {
         output.WriteLine("Order #" + order.Id);
         output.WriteLine("Client: " + order.CustomerName);
-        foreach (var drink in order.Drinks)
+        foreach (var item in order.Items)
         {
-            output.WriteLine($"  {drink,-40}{drink.Price,6} lei");
+            output.WriteLine($"  {item.Description,-40}{item.Price,6} lei");
+            PrintParts(item, "    ");
         }
 
         output.WriteLine($"Subtotal: {subtotal} lei");
         if (subtotal != total)
             output.WriteLine($"Discount: {discountName}");
         output.WriteLine($"Total: {total} lei");
+    }
+
+    private void PrintParts(IOrderItem item, string indent)
+    {
+        foreach (var part in item.Parts)
+        {
+            output.WriteLine(indent + "- " + part.Description);
+            PrintParts(part, indent + "  ");
+        }
     }
 }

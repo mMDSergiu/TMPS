@@ -8,8 +8,8 @@ public class PriceCalculator : IPriceCalculator
     {
         decimal sum = 0;
 
-        foreach (var d in order.Drinks)
-            sum += d.Price;
+        foreach (var item in order.Items)
+            sum += item.Price;
 
         return sum;
     }
