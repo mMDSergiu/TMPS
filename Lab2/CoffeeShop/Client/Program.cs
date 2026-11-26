@@ -1,3 +1,4 @@
+using CoffeeShop.Extras;
 using CoffeeShop.Models;
 using CoffeeShop.Notifications;
 using CoffeeShop.Output;
@@ -35,7 +36,7 @@ var service = new OrderService(repo, new ConsoleNotifier(), new PriceCalculator(
 
 
 var o1 = new Order("Ana");
-o1.Items.Add(menu.Combo("Breakfast"));
+o1.Items.Add(new ToGo(menu.Combo("Breakfast")));
 o1.Items.Add(menu.Make("Espresso").ExtraShot().Build());
 service.ProcessOrder(o1, new StudentDiscount(), new CardPayment("4111222233334444", output));
 Console.WriteLine();
@@ -48,5 +49,11 @@ var family = new Combo("Family", discount: 12)
 var o2 = new Order("Ion");
 o2.Items.Add(family);
 service.ProcessOrder(o2, new HappyHourDiscount(), new CashPayment(120, output));
+Console.WriteLine();
+
+var o3 = new Order("Victor");
+o3.Items.Add(new GiftBox(new ToGo(menu.Combo("Sweet"))));
+o3.Items.Add(new Pastry("Cookie", 15));
+service.ProcessOrder(o3, new NoDiscount(), new CardPayment("5555666677778888", output));
 
 Console.WriteLine("\nTotal orders saved: " + repo.GetAll().Count);
