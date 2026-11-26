@@ -31,8 +31,12 @@ IMenu menu = shopMenu;
 new MenuPrinter(output).Print(menu);
 Console.WriteLine();
 
-var repo = new OrderRepository();
-var service = new OrderService(repo, new ConsoleNotifier(), new PriceCalculator(), new ReceiptPrinter(output));
+var cashier = new Staff("Maria", IsManager: false);
+var manager = new Staff("Dan", IsManager: true);
+
+var allOrders = new OrderRepository();
+var calculator = new PriceCalculator();
+var service = new OrderService(new ProtectedOrders(allOrders, cashier), new ConsoleNotifier(), calculator, new ReceiptPrinter(output));
 
 
 var o1 = new Order("Ana");
@@ -55,5 +59,15 @@ var o3 = new Order("Victor");
 o3.Items.Add(new GiftBox(new ToGo(menu.Combo("Sweet"))));
 o3.Items.Add(new Pastry("Cookie", 15));
 service.ProcessOrder(o3, new NoDiscount(), new CardPayment("5555666677778888", output));
+Console.WriteLine();
 
-Console.WriteLine("\nTotal orders saved: " + repo.GetAll().Count);
+try
+{
+    new SalesReport(new ProtectedOrders(allOrders, cashier), calculator, output).Print();
+}
+catch (UnauthorizedAccessException e)
+{
+    output.WriteLine("Access denied: " + e.Message);
+}
+
+new SalesReport(new ProtectedOrders(allOrders, manager), calculator, output).Print();
